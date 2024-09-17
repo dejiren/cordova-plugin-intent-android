@@ -3,6 +3,8 @@ package com.betasoft.cordova.plugin.intent;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
+import java.lang.reflect.Array;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -176,7 +178,7 @@ public class IntentPlugin extends CordovaPlugin {
             }
 
             intentJSON.put("type", intent.getType());
-            intentJSON.put("extras", intent.getExtras());
+            intentJSON.put("extras", toJsonObject(intent.getExtras()));
             intentJSON.put("action", intent.getAction());
             intentJSON.put("categories", intent.getCategories());
             intentJSON.put("flags", intent.getFlags());
@@ -191,6 +193,43 @@ public class IntentPlugin extends CordovaPlugin {
             Log.d(pluginName, Arrays.toString(e.getStackTrace()));
 
             return null;
+        }
+    }
+
+    private static JSONObject toJsonObject(Bundle bundle) {
+        try {
+            return (JSONObject) toJsonValue(bundle);
+        } catch (JSONException e) {
+            throw new IllegalArgumentException("Cannot convert bundle to JSON: " + e.getMessage(), e);
+        }
+    }
+
+    private static Object toJsonValue(final Object value) throws JSONException {
+        if (value == null) {
+            return null;
+        } else if (value instanceof Bundle) {
+            final Bundle bundle = (Bundle) value;
+            final JSONObject result = new JSONObject();
+            for (final String key : bundle.keySet()) {
+                result.put(key, toJsonValue(bundle.get(key)));
+            }
+            return result;
+        } else if (value.getClass().isArray()) {
+            final JSONArray result = new JSONArray();
+            int length = Array.getLength(value);
+            for (int i = 0; i < length; ++i) {
+                result.put(i, toJsonValue(Array.get(value, i)));
+            }
+            return result;
+        } else if (
+                value instanceof String
+                        || value instanceof Boolean
+                        || value instanceof Integer
+                        || value instanceof Long
+                        || value instanceof Double) {
+            return value;
+        } else {
+            return String.valueOf(value);
         }
     }
 
