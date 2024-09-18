@@ -91,6 +91,8 @@ public class IntentPlugin extends CordovaPlugin {
 
         Intent intent = cordova.getActivity().getIntent();
         context.sendPluginResult(new PluginResult(PluginResult.Status.OK, getIntentJson(intent)));
+        // dejiren 専用 1回だけ取得して、topicDataを削除する
+        intent.removeExtra("topicData");
         return true;
     }
 
